@@ -69,22 +69,22 @@ dadgad-transposer/
 
 ```bash
 # Install all workspace dependencies
-npm install
+pnpm install
 
 # Start dev server (apps/web)
-npm run dev
+pnpm dev
 
 # Build for production
-npm run build
+pnpm build
 
 # Preview production build
-npm run preview
+pnpm preview
 ```
 
 ### Requirements
 
 - Node.js >= 18
-- npm (workspaces)
+- pnpm >= 10
 
 ---
 
@@ -92,12 +92,12 @@ npm run preview
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Start Vite dev server with HMR |
-| `npm run build` | Typecheck + production build |
-| `npm run preview` | Serve production build locally |
-| `npm run lint` | Run oxlint on web app |
-| `npm run typecheck` | TypeScript typecheck |
-| `npm run test:core` | Run core package tests (future) |
+| `pnpm dev` | Start Vite dev server with HMR |
+| `pnpm build` | Typecheck + production build |
+| `pnpm preview` | Serve production build locally |
+| `pnpm lint` | Run oxlint on web app |
+| `pnpm typecheck` | TypeScript typecheck |
+| `pnpm test:core` | Run core package tests (future) |
 
 ### Working on the engine
 

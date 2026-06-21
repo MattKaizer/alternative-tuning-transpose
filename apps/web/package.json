@@ -11,7 +11,7 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
-    "@dadgad/core": "*",
+    "@dadgad/core": "workspace:*",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

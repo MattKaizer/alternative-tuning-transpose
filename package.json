@@ -3,17 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "description": "Same chords, new shapes — DADGAD voicing finder",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@11.0.9",
   "scripts": {
-    "dev": "npm run dev -w apps/web",
-    "build": "npm run build -w apps/web",
-    "preview": "npm run preview -w apps/web",
-    "lint": "npm run lint -w apps/web",
-    "typecheck": "npm run typecheck -w apps/web",
-    "test:core": "npm run test -w packages/core"
+    "dev": "pnpm --filter @dadgad/web dev",
+    "build": "pnpm --filter @dadgad/web build",
+    "preview": "pnpm --filter @dadgad/web preview",
+    "lint": "pnpm --filter @dadgad/web lint",
+    "typecheck": "pnpm --filter @dadgad/web typecheck",
+    "test:core": "pnpm --filter @dadgad/core test"
   },
   "engines": {
     "node": ">=18"
