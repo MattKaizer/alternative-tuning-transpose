@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DADGAD · Acordes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --ink:#1b1410; --wood:#241a14; --woodHi:#2f231b; --rose:#3a2a20;
+  --brass:#d6a23c; --brassDim:#9a7327; --bone:#ece3d1; --boneDim:#b7a98f;
+  --muted:#94836d; --line:#4a382b; --bad:#c2664a;
+  --serif:'Fraunces',Georgia,serif; --mono:'DM Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--bone);font-family:system-ui,sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:28px 18px 60px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--brass);text-transform:uppercase}
+.tuning{display:flex;align-items:center;gap:12px;margin:4px 0 12px}
+.peg{display:flex;flex-direction:column;align-items:center}
+.peg .str{width:2px;height:26px;background:var(--brass);opacity:.85}
+.peg .lbl{font-family:var(--serif);font-size:18px;margin-top:4px}
+h1{font-family:var(--serif);font-size:40px;font-weight:700;margin:0 0 0 14px;line-height:1}
+h1 .dot{color:var(--brass)}
+.lede{color:var(--boneDim);font-size:14px;max-width:560px}
+.panel{background:var(--wood);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:16px}
+label.tag{font-family:var(--mono);font-size:11px;color:var(--muted)}
+textarea{width:100%;margin-top:4px;border-radius:6px;padding:8px;background:var(--ink);color:var(--bone);
+  border:1px solid var(--line);resize:vertical;font-size:16px;font-family:inherit}
+textarea:focus{outline:2px solid var(--brass);outline-offset:1px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.presets button{background:var(--woodHi);border:1px solid var(--line);color:var(--boneDim);
+  font-size:12px;border-radius:6px;padding:4px 8px;cursor:pointer}
+.presets button:hover{color:var(--bone);border-color:var(--brassDim)}
+.ctrls{display:flex;flex-wrap:wrap;gap:24px;margin-top:12px}
+.ctrls label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--boneDim)}
+.ctrls input[type=range]{accent-color:var(--brass)}
+.ctrls .val{font-family:var(--mono);color:var(--brass)}
+.warn{color:var(--bad);font-size:12px;margin-top:8px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.card{background:var(--woodHi);border:1px solid var(--line);border-radius:8px;padding:12px}
+.card .head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.card .name{font-family:var(--serif);font-size:22px;color:var(--bone);font-weight:600}
+.card .pcs{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.boxes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.box{background:var(--ink);border-radius:6px;padding:4px}
+.none{color:var(--muted);font-size:12px}
+.key{margin-top:24px}
+.key .h{font-family:var(--mono);font-size:11px;color:var(--brass);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.key p{color:var(--boneDim);font-size:13px;line-height:1.5;margin:0}
+.key b{color:var(--bone)} .x{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Open tuning · low → high</div>
+    <div class="tuning" id="tuning"></div>
+    <p class="lede">Escribe los acordes de la canción (en afinación estándar). El nombre no cambia — la forma sí. Estas son las maneras más abiertas de tocarlos en DADGAD.</p>
+  </header>
+
+  <div class="panel">
+    <label class="tag">Acordes</label>
+    <textarea id="input" rows="2" spellcheck="false">D Dsus4 G Em7 Cadd9 Asus4</textarea>
+    <div class="presets" id="presets"></div>
+    <div class="ctrls">
+      <label>Formas c/u <input id="shapes" type="range" min="1" max="4" value="4"><span class="val" id="shapesV">4</span></label>
+      <label>Hasta el traste <input id="maxfret" type="range" min="5" max="15" value="12"><span class="val" id="maxfretV">12</span></label>
+    </div>
+    <p class="warn" id="warn" style="display:none"></p>
+  </div>
+
+  <div class="grid" id="results"></div>
+
+  <div class="panel key">
+    <div class="h">Cómo leer las cajitas</div>
+    <p>Las cuerdas van de izquierda → derecha como <b>D A D G A D</b> (grave a aguda). Un círculo sobre la cejilla = cuerda al aire; una <span class="x">✕</span> = no la toques. Los números en los puntos son trastes. Las formas que dejan sonar las cuerdas D y A al aire aparecen primero — ese drone es la gracia de DADGAD.</p>
+  </div>
+</div>
+
+<script>
+const STRINGS=[38,45,50,55,57,62];
+const OPEN_LABELS=["D","A","D","G","A","D"];
+const PC=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const N2P={C:0,"C#":1,DB:1,D:2,"D#":3,EB:3,E:4,FB:4,F:5,"E#":5,"F#":6,GB:6,G:7,"G#":8,AB:8,A:9,"A#":10,BB:10,B:11,CB:11,"B#":0};
+const Q={"":[0,4,7],maj:[0,4,7],M:[0,4,7],m:[0,3,7],min:[0,3,7],"-":[0,3,7],"5":[0,7],
+sus2:[0,2,7],sus4:[0,5,7],sus:[0,5,7],"7":[0,4,7,10],dom7:[0,4,7,10],maj7:[0,4,7,11],M7:[0,4,7,11],
+m7:[0,3,7,10],min7:[0,3,7,10],"6":[0,4,7,9],m6:[0,3,7,9],dim:[0,3,6],dim7:[0,3,6,9],m7b5:[0,3,6,10],
+aug:[0,4,8],"+":[0,4,8],add9:[0,4,7,2],"9":[0,4,7,10,2],m9:[0,3,7,10,2],maj9:[0,4,7,11,2],"7sus4":[0,5,7,10]};
+
+function parseChord(name){
+  let nm=String(name).trim(); if(!nm) return null;
+  let bass=null; const sl=nm.split("/");
+  if(sl.length===2){nm=sl[0].trim(); const bm=sl[1].trim().match(/^([A-Ga-g])([#b]?)$/);
+    if(bm) bass=N2P[(bm[1].toUpperCase()+bm[2]).toUpperCase()];}
+  const m=nm.match(/^([A-Ga-g])([#b]?)(.*)$/); if(!m) return null;
+  const root=m[1].toUpperCase()+m[2]; const rootPc=N2P[root.toUpperCase()];
+  if(rootPc==null) return null;
+  const q=m[3].trim(); if(!(q in Q)) return null;
+  const iv=Q[q]; const pcs=[...new Set(iv.map(i=>(rootPc+i)%12))];
+  const essIv=iv.length<=2?iv:iv.filter(i=>i!==7);
+  const ess=[...new Set(essIv.map(i=>(rootPc+i)%12))];
+  return {display:nm+(bass!=null?"/"+PC[bass]:""),rootPc,pcs,ess,bass};
+}
+function findVoicings(ch,maxFret,limit){
+  const opts=STRINGS.map(open=>{const a=[null];for(let f=0;f<=maxFret;f++)if(ch.pcs.includes((open+f)%12))a.push(f);return a;});
+  const out=[],cur=new Array(6);
+  function ev(){
+    const s=[];for(let i=0;i<6;i++)if(cur[i]!=null)s.push(i);
+    if(s.length<3)return;
+    const spcs=new Set(s.map(i=>(STRINGS[i]+cur[i])%12));
+    for(const e of ch.ess)if(!spcs.has(e))return;
+    const fr=s.filter(i=>cur[i]>0).map(i=>cur[i]);
+    let span=0;if(fr.length)span=Math.max(...fr)-Math.min(...fr);
+    if(span>4)return;
+    const lo=s[0],hi=s[s.length-1];let inter=0;for(let i=lo;i<=hi;i++)if(cur[i]==null)inter++;
+    if(inter>1||fr.length>4)return;
+    const bassPc=(STRINGS[s[0]]+cur[s[0]])%12;
+    if(ch.bass!=null&&!spcs.has(ch.bass))return;
+    let sc=0;const opens=s.filter(i=>cur[i]===0).length;
+    sc+=opens*1.6; if(cur[0]===0)sc+=1.2;
+    if(bassPc===ch.rootPc)sc+=3; if(ch.bass!=null&&bassPc===ch.bass)sc+=2.5;
+    if(spcs.has((ch.rootPc+7)%12))sc+=1; sc+=s.length*0.5; sc-=inter*2; sc-=span*0.5; sc-=fr.length*0.3;
+    const avg=fr.length?fr.reduce((a,b)=>a+b,0)/fr.length:0; sc-=avg*0.45;
+    out.push({frets:[...cur],score:sc});
+  }
+  (function rec(i){if(i===6)return ev();for(const o of opts[i]){cur[i]=o;rec(i+1);}})(0);
+  out.sort((a,b)=>b.score-a.score);
+  const seen=new Set(),u=[];
+  for(const v of out){const k=v.frets.join(",");if(seen.has(k))continue;seen.add(k);u.push(v);}
+  return u.slice(0,limit).map(v=>({frets:v.frets}));
+}
+
+const C={ink:"#1b1410",rose:"#3a2a20",brass:"#d6a23c",brassDim:"#9a7327",bone:"#ece3d1",boneDim:"#b7a98f",muted:"#94836d",line:"#4a382b",bad:"#c2664a"};
+function diagram(frets){
+  const W=132,H=168,padL=16,padR=16,padT=30,padB=22,cols=6,rows=4;
+  const gx=(W-padL-padR)/(cols-1),gy=(H-padT-padB)/rows;
+  const fr=frets.filter(f=>f!=null&&f>0);
+  const minF=fr.length?Math.min(...fr):0;
+  const base=minF>2?minF-1:0;
+  const sx=i=>padL+i*gx, fy=r=>padT+r*gy;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">`;
+  s+=`<rect x="${padL-8}" y="${padT-2}" width="${W-padL-padR+16}" height="${rows*gy+4}" rx="3" fill="${C.rose}" stroke="${C.line}"/>`;
+  if(base===0) s+=`<rect x="${padL-8}" y="${padT-4}" width="${W-padL-padR+16}" height="4" fill="${C.bone}" rx="1"/>`;
+  else s+=`<text x="${W-padR+6}" y="${padT+gy*0.62}" font-size="10" fill="${C.brass}" font-family="var(--mono)">${base+1}fr</text>`;
+  for(let r=0;r<rows;r++) s+=`<line x1="${padL-8}" y1="${fy(r+1)}" x2="${W-padR+8}" y2="${fy(r+1)}" stroke="${C.brassDim}" stroke-width="1.4" opacity="0.7"/>`;
+  for(let i=0;i<cols;i++) s+=`<line x1="${sx(i)}" y1="${padT}" x2="${sx(i)}" y2="${padT+rows*gy}" stroke="${C.boneDim}" stroke-width="${0.7+i*0.18}" opacity="0.85"/>`;
+  frets.forEach((f,i)=>{
+    if(f===0) s+=`<circle cx="${sx(i)}" cy="${padT-12}" r="4" fill="none" stroke="${C.bone}" stroke-width="1.4"/>`;
+    else if(f==null) s+=`<g stroke="${C.bad}" stroke-width="1.4"><line x1="${sx(i)-3.5}" y1="${padT-15.5}" x2="${sx(i)+3.5}" y2="${padT-8.5}"/><line x1="${sx(i)-3.5}" y1="${padT-8.5}" x2="${sx(i)+3.5}" y2="${padT-15.5}"/></g>`;
+  });
+  frets.forEach((f,i)=>{
+    if(f==null||f===0)return;
+    const row=f-base, cy=fy(row)-gy/2;
+    s+=`<circle cx="${sx(i)}" cy="${cy}" r="6.5" fill="${C.bone}" stroke="${C.ink}" stroke-width="0.5"/>`;
+    s+=`<text x="${sx(i)}" y="${cy+3.2}" font-size="8" fill="${C.ink}" text-anchor="middle" font-family="var(--mono)">${f}</text>`;
+  });
+  OPEN_LABELS.forEach((l,i)=> s+=`<text x="${sx(i)}" y="${H-7}" font-size="9.5" fill="${C.muted}" text-anchor="middle" font-family="var(--mono)">${l}</text>`);
+  return s+"</svg>";
+}
+
+const PRESETS={"Modal folk (D)":"D Dsus4 G Em7 Cadd9 Asus4","Celta Am":"Am C G D F","Cantautor":"G D Em C","Bluesero en A":"A7 D7 E7"};
+
+// build static UI bits
+const tuning=document.getElementById("tuning");
+OPEN_LABELS.forEach((l,i)=>{tuning.insertAdjacentHTML("beforeend",`<div class="peg"><div class="str" style="width:${1.4+i*0.5}px"></div><div class="lbl">${l}</div></div>`);});
+tuning.insertAdjacentHTML("beforeend",`<h1>DADGAD<span class="dot">.</span></h1>`);
+const presets=document.getElementById("presets");
+Object.entries(PRESETS).forEach(([n,v])=>{const b=document.createElement("button");b.textContent=n;b.onclick=()=>{input.value=v;render();};presets.appendChild(b);});
+
+const input=document.getElementById("input"), shapes=document.getElementById("shapes"), maxfret=document.getElementById("maxfret");
+const shapesV=document.getElementById("shapesV"), maxfretV=document.getElementById("maxfretV");
+const results=document.getElementById("results"), warn=document.getElementById("warn");
+
+function esc(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+function render(){
+  shapesV.textContent=shapes.value; maxfretV.textContent=maxfret.value;
+  const toks=input.value.split(/[\s,|]+/).map(t=>t.trim()).filter(Boolean);
+  const unknown=[]; results.innerHTML="";
+  toks.forEach(tok=>{
+    const ch=parseChord(tok);
+    if(!ch){unknown.push(tok);return;}
+    const vs=findVoicings(ch,+maxfret.value,+shapes.value);
+    const pcs=[...new Set(ch.pcs)].map(p=>PC[p]).join(" ");
+    let boxes = vs.length? `<div class="boxes">`+vs.map(v=>`<div class="box">${diagram(v.frets)}</div>`).join("")+`</div>`
+      : `<p class="none">Sin voicing limpio en este rango de trastes.</p>`;
+    results.insertAdjacentHTML("beforeend",
+      `<div class="card"><div class="head"><span class="name">${esc(ch.display)}</span><span class="pcs">${pcs}</span></div>${boxes}</div>`);
+  });
+  if(unknown.length){warn.style.display="block";warn.textContent="No pude leer: "+unknown.join(", ")+" — probá formas como G, Em7, Cadd9, Dsus4, A7, F#m, G/B.";}
+  else warn.style.display="none";
+}
+input.addEventListener("input",render);
+shapes.addEventListener("input",render);
+maxfret.addEventListener("input",render);
+render();
+</script>
+</body>
+</html>
